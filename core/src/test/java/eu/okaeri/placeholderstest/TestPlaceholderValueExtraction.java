@@ -91,15 +91,11 @@ public class TestPlaceholderValueExtraction {
             .with("age", 25);
 
         // Convert Integer to String using mapper
-        String ageStr = context.getPlaceholderValue("age", 
-            obj -> String.valueOf(obj), 
-            String.class);
+        String ageStr = context.getPlaceholderValue("age", obj -> String.valueOf(obj), String.class);
         assertEquals("25", ageStr);
 
         // Convert Integer to Double using mapper
-        Double ageDouble = context.getPlaceholderValue("age", 
-            obj -> ((Integer) obj).doubleValue(), 
-            Double.class);
+        Double ageDouble = context.getPlaceholderValue("age", obj -> ((Integer) obj).doubleValue(), Double.class);
         assertEquals(25.0, ageDouble);
     }
 
@@ -116,9 +112,7 @@ public class TestPlaceholderValueExtraction {
             .with("item", item);
 
         // Extract and convert amount to string
-        String amountStr = context.getPlaceholderValue("item.amount", 
-            obj -> "Amount: " + obj, 
-            String.class);
+        String amountStr = context.getPlaceholderValue("item.amount", obj -> "Amount: " + obj, String.class);
         assertEquals("Amount: 123", amountStr);
     }
 
