@@ -164,4 +164,79 @@ public class PlaceholderContext {
 
         return builder.toString();
     }
+
+    /**
+     * Extracts and returns the value of a placeholder without string conversion.
+     * This method allows you to get the actual typed value of a placeholder by navigating through
+     * the chain of fields (e.g., "user.rank.points").
+     *
+     * @param key The placeholder key, which can contain nested fields separated by dots (e.g., "user.rank.points")
+     * @param outputValueType The expected type of the returned value
+     * @param <T> The type parameter
+     * @return The value of the placeholder cast to type T
+     * @throws IllegalArgumentException if the placeholder is not found or if the returned type doesn't match outputValueType
+     */
+    @NonNull
+    public <T> T getPlaceholderValue(@NonNull String key, @NonNull Class<T> outputValueType) {
+        Object value = this.resolvePlaceholderValue(key);
+        
+        if (value == null) {
+            throw new IllegalArgumentException("placeholder '" + key + "' resolved to null");
+        }
+        
+        if (!outputValueType.isInstance(value)) {
+            throw new IllegalArgumentException(
+                "placeholder '" + key + "' returned type " + value.getClass().getName() + 
+                " but expected " + outputValueType.getName()
+            );
+        }
+        
+        return outputValueType.cast(value);
+    }
+
+    /**
+     * Extracts and returns the value of a placeholder with custom type conversion.
+     * This method allows you to get the value of a placeholder and convert it to the desired type
+     * using a custom mapper function.
+     *
+     * @param key The placeholder key, which can contain nested fields separated by dots (e.g., "user.rank.points")
+     * @param valueMapper A function that converts the resolved Object to the desired type
+     * @param outputValueType The expected type of the returned value (used for type safety)
+     * @param <T> The type parameter
+     * @return The value of the placeholder converted to type T using the mapper
+     * @throws IllegalArgumentException if the placeholder is not found
+     */
+    @NonNull
+    public <T> T getPlaceholderValue(
+        @NonNull String key, 
+        @NonNull java.util.function.Function<Object, ? extends T> valueMapper,
+        @NonNull Class<T> outputValueType
+    ) {
+        Object value = this.resolvePlaceholderValue(key);
+        
+        if (value == null) {
+            throw new IllegalArgumentException("placeholder '" + key + "' resolved to null");
+        }
+        
+        return valueMapper.apply(value);
+    }
+
+    /**
+     * Internal helper method to resolve a placeholder value.
+     * 
+     * @param key The placeholder key
+     * @return The resolved value or null if not found
+     */
+    @Nullable
+    private Object resolvePlaceholderValue(@NonNull String key) {
+        MessageField field = MessageField.of(key);
+        String rootName = field.getName();
+        
+        Placeholder placeholder = this.fields.get(rootName);
+        if (placeholder == null) {
+            throw new IllegalArgumentException("placeholder '" + rootName + "' not found in context");
+        }
+        
+        return placeholder.resolveValue(field);
+    }
 }
