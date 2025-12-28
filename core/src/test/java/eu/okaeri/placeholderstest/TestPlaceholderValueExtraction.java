@@ -6,6 +6,8 @@ import eu.okaeri.placeholderstest.schema.external.ExternalItem;
 import eu.okaeri.placeholderstest.schema.external.ExternalMeta;
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestPlaceholderValueExtraction {
@@ -16,11 +18,13 @@ public class TestPlaceholderValueExtraction {
             .with("name", "John")
             .with("age", 25);
 
-        String name = context.getPlaceholderValue("name", String.class);
-        assertEquals("John", name);
+        Optional<String> name = context.getPlaceholderValue("name", String.class);
+        assertTrue(name.isPresent());
+        assertEquals("John", name.get());
 
-        Integer age = context.getPlaceholderValue("age", Integer.class);
-        assertEquals(25, age);
+        Optional<Integer> age = context.getPlaceholderValue("age", Integer.class);
+        assertTrue(age.isPresent());
+        assertEquals(25, age.get());
     }
 
     @Test
@@ -45,17 +49,20 @@ public class TestPlaceholderValueExtraction {
             .with("item", item);
 
         // Extract nested value
-        String metaName = context.getPlaceholderValue("item.meta.name", String.class);
-        assertEquals("Red stone", metaName);
+        Optional<String> metaName = context.getPlaceholderValue("item.meta.name", String.class);
+        assertTrue(metaName.isPresent());
+        assertEquals("Red stone", metaName.get());
 
         // Extract intermediate object
-        ExternalMeta extractedMeta = context.getPlaceholderValue("item.meta", ExternalMeta.class);
-        assertEquals(meta, extractedMeta);
-        assertEquals("Red stone", extractedMeta.getName());
+        Optional<ExternalMeta> extractedMeta = context.getPlaceholderValue("item.meta", ExternalMeta.class);
+        assertTrue(extractedMeta.isPresent());
+        assertEquals(meta, extractedMeta.get());
+        assertEquals("Red stone", extractedMeta.get().getName());
 
         // Extract primitive type
-        Integer amount = context.getPlaceholderValue("item.amount", Integer.class);
-        assertEquals(123, amount);
+        Optional<Integer> amount = context.getPlaceholderValue("item.amount", Integer.class);
+        assertTrue(amount.isPresent());
+        assertEquals(123, amount.get());
     }
 
     @Test
@@ -63,14 +70,9 @@ public class TestPlaceholderValueExtraction {
         PlaceholderContext context = PlaceholderContext.create()
             .with("age", 25);
 
-        // Try to extract as wrong type
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            context.getPlaceholderValue("age", String.class);
-        });
-
-        assertTrue(exception.getMessage().contains("returned type"));
-        assertTrue(exception.getMessage().contains("Integer"));
-        assertTrue(exception.getMessage().contains("String"));
+        // Try to extract as wrong type - should return empty Optional
+        Optional<String> result = context.getPlaceholderValue("age", String.class);
+        assertFalse(result.isPresent());
     }
 
     @Test
@@ -78,6 +80,7 @@ public class TestPlaceholderValueExtraction {
         PlaceholderContext context = PlaceholderContext.create()
             .with("name", "John");
 
+        // Missing placeholder still throws exception
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             context.getPlaceholderValue("missing", String.class);
         });
@@ -91,12 +94,14 @@ public class TestPlaceholderValueExtraction {
             .with("age", 25);
 
         // Convert Integer to String using mapper
-        String ageStr = context.getPlaceholderValue("age", obj -> String.valueOf(obj), String.class);
-        assertEquals("25", ageStr);
+        Optional<String> ageStr = context.getPlaceholderValue("age", obj -> String.valueOf(obj), String.class);
+        assertTrue(ageStr.isPresent());
+        assertEquals("25", ageStr.get());
 
         // Convert Integer to Double using mapper
-        Double ageDouble = context.getPlaceholderValue("age", obj -> ((Integer) obj).doubleValue(), Double.class);
-        assertEquals(25.0, ageDouble);
+        Optional<Double> ageDouble = context.getPlaceholderValue("age", obj -> ((Integer) obj).doubleValue(), Double.class);
+        assertTrue(ageDouble.isPresent());
+        assertEquals(25.0, ageDouble.get());
     }
 
     @Test
@@ -112,8 +117,9 @@ public class TestPlaceholderValueExtraction {
             .with("item", item);
 
         // Extract and convert amount to string
-        String amountStr = context.getPlaceholderValue("item.amount", obj -> "Amount: " + obj, String.class);
-        assertEquals("Amount: 123", amountStr);
+        Optional<String> amountStr = context.getPlaceholderValue("item.amount", obj -> "Amount: " + obj, String.class);
+        assertTrue(amountStr.isPresent());
+        assertEquals("Amount: 123", amountStr.get());
     }
 
     @Test
@@ -128,12 +134,9 @@ public class TestPlaceholderValueExtraction {
             .setPlaceholders(placeholders)
             .with("item", item);
 
-        // Extracting null should throw exception
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            context.getPlaceholderValue("item.meta", ExternalMeta.class);
-        });
-
-        assertTrue(exception.getMessage().contains("resolved to null"));
+        // Extracting null should return empty Optional
+        Optional<ExternalMeta> result = context.getPlaceholderValue("item.meta", ExternalMeta.class);
+        assertFalse(result.isPresent());
     }
 
     @Test
@@ -154,11 +157,13 @@ public class TestPlaceholderValueExtraction {
             .with("item", item);
 
         // Extract multiple values
-        Integer amount = context.getPlaceholderValue("item.amount", Integer.class);
-        assertEquals(456, amount);
+        Optional<Integer> amount = context.getPlaceholderValue("item.amount", Integer.class);
+        assertTrue(amount.isPresent());
+        assertEquals(456, amount.get());
 
-        String name = context.getPlaceholderValue("item.meta.name", String.class);
-        assertEquals("Special Item", name);
+        Optional<String> name = context.getPlaceholderValue("item.meta.name", String.class);
+        assertTrue(name.isPresent());
+        assertEquals("Special Item", name.get());
     }
 
     @Test
@@ -191,11 +196,13 @@ public class TestPlaceholderValueExtraction {
             .with("player", player);
 
         // Extract value with function parameter - player.stats.value(kills)
-        String kills = context.getPlaceholderValue("player.stats.value(kills)", String.class);
-        assertEquals("150", kills);
+        Optional<String> kills = context.getPlaceholderValue("player.stats.value(kills)", String.class);
+        assertTrue(kills.isPresent());
+        assertEquals("150", kills.get());
 
         // Extract with different parameter
-        String deaths = context.getPlaceholderValue("player.stats.value(deaths)", String.class);
-        assertEquals("42", deaths);
+        Optional<String> deaths = context.getPlaceholderValue("player.stats.value(deaths)", String.class);
+        assertTrue(deaths.isPresent());
+        assertEquals("42", deaths.get());
     }
 }

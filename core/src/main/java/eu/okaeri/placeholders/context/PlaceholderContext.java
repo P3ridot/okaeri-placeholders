@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Data
 public class PlaceholderContext {
@@ -173,25 +174,22 @@ public class PlaceholderContext {
      * @param key The placeholder key, which can contain nested fields separated by dots (e.g., "user.rank.points")
      * @param outputValueType The expected type of the returned value
      * @param <T> The type parameter
-     * @return The value of the placeholder cast to type T
-     * @throws IllegalArgumentException if the placeholder is not found or if the returned type doesn't match outputValueType
+     * @return Optional containing the value of the placeholder cast to type T, or empty if the value is null or type doesn't match
+     * @throws IllegalArgumentException if the placeholder is not found in context
      */
     @NonNull
-    public <T> T getPlaceholderValue(@NonNull String key, @NonNull Class<T> outputValueType) {
+    public <T> Optional<T> getPlaceholderValue(@NonNull String key, @NonNull Class<T> outputValueType) {
         Object value = this.resolvePlaceholderValue(key);
         
         if (value == null) {
-            throw new IllegalArgumentException("placeholder '" + key + "' resolved to null");
+            return Optional.empty();
         }
         
         if (!outputValueType.isInstance(value)) {
-            throw new IllegalArgumentException(
-                "placeholder '" + key + "' returned type " + value.getClass().getName() + 
-                " but expected " + outputValueType.getName()
-            );
+            return Optional.empty();
         }
         
-        return outputValueType.cast(value);
+        return Optional.of(outputValueType.cast(value));
     }
 
     /**
@@ -203,11 +201,11 @@ public class PlaceholderContext {
      * @param valueMapper A function that converts the resolved Object to the desired type
      * @param outputValueType The expected type of the returned value (used for type safety)
      * @param <T> The type parameter
-     * @return The value of the placeholder converted to type T using the mapper
-     * @throws IllegalArgumentException if the placeholder is not found
+     * @return Optional containing the value of the placeholder converted to type T using the mapper, or empty if the value is null
+     * @throws IllegalArgumentException if the placeholder is not found in context
      */
     @NonNull
-    public <T> T getPlaceholderValue(
+    public <T> Optional<T> getPlaceholderValue(
         @NonNull String key, 
         @NonNull java.util.function.Function<Object, ? extends T> valueMapper,
         @NonNull Class<T> outputValueType
@@ -215,10 +213,10 @@ public class PlaceholderContext {
         Object value = this.resolvePlaceholderValue(key);
         
         if (value == null) {
-            throw new IllegalArgumentException("placeholder '" + key + "' resolved to null");
+            return Optional.empty();
         }
         
-        return valueMapper.apply(value);
+        return Optional.of(valueMapper.apply(value));
     }
 
     /**
