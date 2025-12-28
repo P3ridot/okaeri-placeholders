@@ -177,7 +177,6 @@ public class PlaceholderContext {
      * @return Optional containing the value of the placeholder cast to type T, or empty if the value is null or type doesn't match
      * @throws IllegalArgumentException if the placeholder is not found in context
      */
-    @NonNull
     public <T> Optional<T> getPlaceholderValue(@NonNull String key, @NonNull Class<T> outputValueType) {
         Object value = this.resolvePlaceholderValue(key);
         
@@ -204,7 +203,6 @@ public class PlaceholderContext {
      * @return Optional containing the value of the placeholder converted to type T using the mapper, or empty if the value is null
      * @throws IllegalArgumentException if the placeholder is not found in context
      */
-    @NonNull
     public <T> Optional<T> getPlaceholderValue(
         @NonNull String key, 
         @NonNull java.util.function.Function<Object, ? extends T> valueMapper,
