@@ -160,4 +160,42 @@ public class TestPlaceholderValueExtraction {
         String name = context.getPlaceholderValue("item.meta.name", String.class);
         assertEquals("Special Item", name);
     }
+
+    @Test
+    public void test_extract_value_with_function_params() {
+        // Create a simple class to test function parameters
+        class Stats {
+            public String getStatValue(String statName) {
+                if ("kills".equals(statName)) return "150";
+                if ("deaths".equals(statName)) return "42";
+                return "unknown";
+            }
+        }
+
+        class Player {
+            private Stats stats = new Stats();
+            public Stats getStats() { return stats; }
+        }
+
+        Placeholders placeholders = Placeholders.create()
+            .registerPlaceholder(Player.class, "stats", (player, field, ctx) -> player.getStats())
+            .registerPlaceholder(Stats.class, "value", (stats, field, ctx) -> {
+                // The field parameter contains the params via field.params()
+                String statName = field.params().strAt(0, "unknown");
+                return stats.getStatValue(statName);
+            });
+
+        Player player = new Player();
+        PlaceholderContext context = PlaceholderContext.create()
+            .setPlaceholders(placeholders)
+            .with("player", player);
+
+        // Extract value with function parameter - player.stats.value(kills)
+        String kills = context.getPlaceholderValue("player.stats.value(kills)", String.class);
+        assertEquals("150", kills);
+
+        // Extract with different parameter
+        String deaths = context.getPlaceholderValue("player.stats.value(deaths)", String.class);
+        assertEquals("42", deaths);
+    }
 }
